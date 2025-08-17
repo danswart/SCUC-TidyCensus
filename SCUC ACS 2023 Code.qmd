@@ -1,0 +1,955 @@
+---
+title: "SCUC ACS 2023 Code"
+subtitle: ""
+description: ""
+author: 
+  - name: "Dan Swart, CPA (ret)"
+    affiliations:
+      - "SCUC-ISD Board of Trustees"
+      - "Seat 6"
+date: today
+date-format: long
+# bibliography: manual-refs.bib
+format:
+  html:
+    resources:
+      - reference-backlinks.js
+    include-after-body:    
+      - text: |
+          # <script type="text/javascript" src="reference-backlinks.js"></script>
+    default: true         
+    code-copy: true
+    code-link: true        # This adds individual buttons
+    code-fold: true        # true = Hide code by default, show on click
+    code-summary: "Show the code"
+    code-overflow: wrap
+    code-block-bg: "#FAEBD7"
+    code-block-border-left: "#31BAE9"
+    # embed-resources: true
+    include-in-header: header.html
+    css:
+      - swart.css
+      - tachyons.min.css
+      - r-colors.css
+    fontsize: 18pt
+    lightbox: true
+    page-layout: full
+    fig-width: 12
+    fig-height: 10
+    fig-dpi: 300
+    html-math-method: katex
+    df-print: paged
+    toc: true
+    toc-float: true
+    citeproc: true
+    link-citations: true
+    linestretch: 1.0
+    
+    
+    
+  typst:
+    fig-width: 12
+    fig-height: 10
+    fig-dpi: 300
+    margin:
+      x: 1in
+      y: 1in
+    toc: true
+    fontsize: 14pt
+    # mainfont: "Cabin"
+    
+  revealjs:
+    slide-number: true
+    transition: fade
+    code-overflow: wrap
+    center: true
+    smaller: true
+    scrollable: true
+    chalkboard: true
+    multiplex: false
+    theme: solarized
+    reference-location: margin
+    logo: img/red-cross-640-435.png
+    footer: "Footer text"
+    code-block-height: 650px
+
+
+
+  # docx:
+  #   highlight-style: github
+  #   fig_caption: true
+
+
+
+editor: source
+
+quarto:
+  render:
+    cache-refresh: true
+
+
+# for .qmd filesd
+execute:
+  echo: true
+  message: false
+  warning: false
+  eval: false
+  fig-width: 12
+  fig-height: 10
+
+
+# for .rmd files
+knitr:
+  opts_chunk:
+    echo: true
+    eval: false
+    error: false
+    warning: false
+    message: false
+    cache: false
+
+---
+
+
+```{r}
+#| label: setup
+#| include: false
+
+# Prevent scientific notation globally
+options(scipen = 999)
+
+options(tigris_use_cache = TRUE)
+
+# install.packages(c("mapview", "survey", "srvyr", "arcgislayers"))
+
+# census_api_key("95496766c51541ee6f402c1e1a8658581285b759", install = TRUE, overwrite = TRUE)
+
+
+# load libraries
+
+# library(readxl)
+# library(writexl) 
+# library(tidyr) 
+# library(readr) 
+# library(purrr) 
+# library(stringr) 
+# library(forcats) 
+# library(lubridate) 
+# library(janitor) 
+# library(ggtext) 
+# library(paletteer) 
+# library(viridis) 
+# library(RColorBrewer) 
+# library(wesanderson) 
+# library(dutchmasters) 
+# library(gghighlight) 
+# library(monochromeR) 
+# library(ggforce) 
+# library(ggthemes)
+# library(gt)
+# library(gtExtras)
+# library(tidyverse)
+# library(plotly)
+# library(ggplot2)
+# library(tibble)
+# library(patchwork)
+# library(ppcor)
+# library(ggplot2)
+# library(corrplot)
+# library(ggcorrplot)
+# library(car)
+# library(WRS2)
+# library(boot)
+# library(BayesFactor)
+# library(pwr)
+# library(qgraph)
+# library(scales)
+# library(here)
+# library(ggdag)      # For plotting DAGs
+# library(dagitty)    # For working with DAG logic
+# library(DiagrammeR) # For complete control of the layout
+# library(knitr)      # For controlling rendering
+# library(kableExtra) # For tables summarizing results
+# library(DT)         # For rendering content that kableExtra cannot (symbols)
+# library(lavaan)     # For latent variable analysis
+# library(ggpubr)
+# library(rethinking)
+# library(broom)
+
+library(tidyverse)
+library(tidycensus)
+
+
+# Force dplyr's select to take precedence
+select <- dplyr::select
+filter <- dplyr::filter
+
+# Set global theme for consistent plots
+theme_set(theme_minimal(base_size = 20) + 
+          theme(
+    plot.title = element_text(face = "bold", size = 26),    # adjust title size
+    plot.subtitle = element_text(face = "bold", size = 24), # adjust subtitle size
+    axis.title.x = element_text(face = "bold", size = 22),
+    axis.title.y = element_text(face = "bold", size = 22),
+    axis.text.x = element_text(face = "bold", size = 22, angle = 45, hjust = 1),
+    legend.position = "bottom",
+    strip.text = element_text(face = "bold"),
+    panel.spacing.x = unit(1.5, "cm"),  # Horizontal spacing only
+    panel.spacing.y = unit(1.5, "cm"),   # Vertical spacing only
+    plot.margin = margin(20, 20, 20, 20, "pt")
+    )
+)
+
+
+# Set seed for reproducibility
+set.seed(123)
+
+```
+
+
+## How to pull Census data for school districts in Texas using the tidycensus package
+
+
+### Using ACS 5-year and 1-year data for all school districts in Texas 
+
+```{r}
+
+# Get ACS 5-year data for all school districts in Texas
+tx_schools_5 <- get_acs(
+  geography = "school district (unified)",
+  state = "TX",
+  variables = c(
+    total_pop = "B01003_001",       # Total population
+    median_income = "B19013_001",   # Median household income
+    pct_poverty = "B17001_002"      # Population in poverty
+  ),
+  year = 2023,
+  survey = "acs5"
+)
+
+View(tx_schools_5)
+
+
+
+# Now, use ACS 1-year data 
+tx_schools_1 <- get_acs(
+  geography = "school district (unified)",
+  state = "TX",
+  variables = c(
+    total_pop = "B01003_001",       # Total population
+    median_income = "B19013_001",   # Median household income
+    pct_poverty = "B17001_002"      # Population in poverty
+  ),
+  year = 2023,
+  survey = "acs1"
+)
+
+View(tx_schools_1)
+
+
+```
+
+
+## 2 Methods to Get Full Name for Specific School District
+
+
+```{r}
+
+# Method 1: Filter after pulling all districts
+scuc_full_name1_5 <- tx_schools_5 %>%
+  filter(str_detect(NAME, "Schertz"))
+
+View(scuc_full_name1_5)
+
+
+# Now, use ACS 1-year data 
+
+scuc_full_name1_1 <- tx_schools_1 %>%
+  filter(str_detect(NAME, "Schertz"))
+
+View(scuc_full_name1_1)
+
+
+
+# Method 2: Get all districts and get full name of the one you want
+
+# See all unified district names use 5-year
+all_districts <- get_acs(
+  geography = "school district (unified)", 
+  state = "TX",
+  variables = c(
+    total_pop = "B01003_001",       # Total population
+    median_income = "B19013_001",   # Median household income
+    pct_poverty = "B17001_002"      # Population in poverty
+  ),
+  year = 2023,
+  survey = "acs5"
+) %>%
+  distinct(NAME)
+
+
+# Search only for specific district full name (no variables)
+scuc_full_name2_5 <- all_districts %>%
+  filter(str_detect(NAME, "Schertz"))
+
+View(scuc_full_name2_5)
+
+
+# Now, use 1-year data
+
+# See all unified district names use 1-year
+all_districts <- get_acs(
+  geography = "school district (unified)", 
+  state = "TX",
+  variables = c(
+    total_pop = "B01003_001",       # Total population
+    median_income = "B19013_001",   # Median household income
+    pct_poverty = "B17001_002"      # Population in poverty
+  ),
+  year = 2023,
+  survey = "acs1"
+) %>%
+  distinct(NAME)
+
+
+# Search only for specific district full name (no variables)
+scuc_full_name2_1 <- all_districts %>%
+  filter(str_detect(NAME, "Schertz"))
+
+View(scuc_full_name2_1)
+
+```
+
+## School District Geography Types
+
+### Texas has three types of school districts in Census data:
+
+```{r}
+
+# All Elementary districts in TX using 5-year
+elem_districts_5 <- get_acs(
+  geography = "school district (elementary)",
+  state = "TX",
+  variables = "B01003_001",
+  year = 2023,
+  survey = "acs5"
+)
+
+View(elem_districts_5)
+
+# Too small to use 1-year
+
+
+# Secondary districts using 5-yr
+secondary_districts_5 <- get_acs(
+  geography = "school district (secondary)",
+  state = "TX",
+  variables = "B01003_001",
+  year = 2023,
+  survey = "acs5"
+)
+
+View(secondary_districts_5)
+
+
+# Too small to use 1-yr
+
+
+# Unified districts (most common - includes both elementary and secondary)
+unified_districts_5 <- get_acs(
+  geography = "school district (unified)",
+  state = "TX",
+  variables = "B01003_001",
+  year = 2023
+)
+
+View(unified_districts)
+
+
+```
+
+
+### Full Example from ACS with Multiple Variables
+
+```{r}
+
+# Pull comprehensive data for Texas school districts 5-year
+tx_school_data_5 <- get_acs(
+  geography = "school district (unified)",
+  state = "TX",
+  variables = c(
+    total_pop = "B01003_001",           # Total population
+    median_income = "B19013_001",       # Median household income
+    median_age = "B01002_001",          # Median age
+    pct_bach = "B15003_022",            # Bachelor's degree
+    pct_grad = "B15003_023",            # Master's degree
+    total_housing = "B25001_001",       # Total housing units
+    median_home_value = "B25077_001"    # Median home value
+  ),
+  year = 2023,
+  survey = "acs5"
+  # output = "wide"  # Makes data wider with one column per variable
+)
+
+
+# Filter for specific district
+scuc_multi_vars_5 <- tx_school_data_5 %>%
+  filter(str_detect(NAME, "Schertz"))
+
+View(scuc_multi_vars_5)
+
+
+
+# Now, use 1 year data
+tx_school_data_1 <- get_acs(
+  geography = "school district (unified)",
+  state = "TX",
+  variables = c(
+    total_pop = "B01003_001",           # Total population
+    median_income = "B19013_001",       # Median household income
+    median_age = "B01002_001",          # Median age
+    pct_bach = "B15003_022",            # Bachelor's degree
+    pct_grad = "B15003_023",            # Master's degree
+    total_housing = "B25001_001",       # Total housing units
+    median_home_value = "B25077_001"    # Median home value
+  ),
+  year = 2023,
+  survey = "acs1"
+  # output = "wide"  # Makes data wider with one column per variable
+)
+
+
+# Filter for specific district
+scuc_multi_vars_1 <- tx_school_data_1 %>%
+  filter(str_detect(NAME, "Schertz"))
+
+View(scuc_multi_vars_1)
+
+```
+
+
+## Using School District GEOID
+
+### If you know the specific GEOID:
+
+```{r}
+
+# GEOIDs for TX school districts start with "48" (TX FIPS code) 5 year
+scuc_no_diploma_with_geometry_5 <- get_acs(
+  geography = "school district (unified)",
+  state = "TX",
+  variables = c(
+    "B01003_001",     # Total population
+    "B29002_003"),    # 9th to 12th grade, no diploma (N/A in 5-yr dataframe)
+  year = 2023,
+  geometry = TRUE,
+  survey = "acs5"
+) %>%
+  filter(GEOID == "4839480")  # SCUC-ISD GEOID
+
+
+View(scuc_no_diploma_with_geometry_5)
+
+
+# Now, use 1-year data
+scuc_no_diploma_with_geometry_1 <- get_acs(
+  geography = "school district (unified)",
+  state = "TX",
+  variables = c(
+    "B01003_001",     # Total population
+    "B29002_003"),    # 9th to 12th grade, no diploma (available only in 1-year dataframe)
+  year = 2023,
+  geometry = TRUE,
+  survey = "acs1"
+) %>%
+  filter(GEOID == "4839480")  # SCUC-ISD GEOID
+
+
+View(scuc_no_diploma_with_geometry_1)
+
+```
+
+
+## Get Multiple Categories for This District using 1 and 5 Year Data
+
+```{r}
+
+# Pull many variables at once from 5-yr data
+district_comprehensive_5 <- get_acs(
+  geography = "school district (unified)",
+  state = "TX",
+  variables = c(
+    # Demographics
+    total_pop = "B01003_001",
+    white_pop = "B02001_002",
+    black_pop = "B02001_003",
+    hispanic_pop = "B03002_012",
+    
+    # Income
+    median_income = "B19013_001",
+    per_capita_income = "B19301_001",
+    
+    # Education
+    pop_25_plus = "B15003_001",
+    hs_grad = "B15003_017",
+    bachelors = "B15003_022",
+    masters = "B15003_023",
+    
+    # Poverty
+    poverty_status = "B17001_001",
+    below_poverty = "B17001_002",
+    
+    # Housing
+    total_housing = "B25001_001",
+    occupied_housing = "B25002_002",
+    median_home_value = "B25077_001",
+    median_rent = "B25064_001",
+    
+    # Age groups
+    under_5 = "B01001_003",
+    age_5_17 = "B09001_001"  # School age population
+  ),
+  year = 2023,
+  survey = "acs5"
+  # output = "wide"  # Makes it easier to read
+) %>%
+  filter(GEOID == "4839480")
+
+View(district_comprehensive_5)
+
+
+# Now using 1-year data
+district_comprehensive_1 <- get_acs(
+  geography = "school district (unified)",
+  state = "TX",
+  variables = c(
+    # Demographics
+    total_pop = "B01003_001",
+    white_pop = "B02001_002",
+    black_pop = "B02001_003",
+    hispanic_pop = "B03002_012",
+    amer_indian_pop = "B02001_004",
+    asian_pop = "B02001_005",
+    pac_islanders_pop = "B02001_006",
+    two_or_more_pop = "B02001_008",
+    other_pop = "B02001_007",
+    
+    
+    # Income
+    median_income = "B19013_001",
+    per_capita_income = "B19301_001",
+    
+    # Education
+    no_diploma = "B29002_003",    # 9th to 12th grade, no diploma (available only in 1-year)
+    pop_25_plus = "B15003_001",
+    hs_grad = "B15003_017",
+    bachelors = "B15003_022",
+    masters = "B15003_023",
+    
+    # Poverty
+    poverty_status = "B17001_001",
+    below_poverty = "B17001_002",
+    
+    # Housing
+    total_housing = "B25001_001",
+    occupied_housing = "B25002_002",
+    median_home_value = "B25077_001",
+    median_rent = "B25064_001",
+    
+    # Age groups
+    under_5 = "B01001_003",
+    age_5_17 = "B09001_001"  # School age population
+  ),
+  year = 2023,
+  survey = "acs1"
+  # output = "wide"  # Makes it easier to read
+) %>%
+  filter(GEOID == "4839480")
+
+View(district_comprehensive_1)
+
+```
+
+
+## Create Searchable Tables of Education Variables for Analysis
+
+```{r}
+
+# Load all available 5-year variables to explore
+all_vars_5 <- load_variables(2023, "acs5")
+
+# Search for education-related variables
+education_vars_5 <- all_vars_5 %>%
+  filter(str_detect(concept, regex("educational", ignore_case = TRUE)))
+
+
+View(education_vars_5)
+
+
+
+# Load all available 1-year variables to explore
+all_vars_1 <- load_variables(2023, "acs1")
+
+# Search for education-related variables
+education_vars_1 <- all_vars_1 %>%
+  filter(str_detect(concept, regex("educational", ignore_case = TRUE)))
+
+
+View(education_vars_1)
+
+
+```
+
+
+
+
+
+<!-- ******************************** -->
+<!-- I STOPPED HERE 05-10-25 AT 12:13 -->
+<!-- ******************************** -->
+
+
+
+
+
+
+
+## Pull Multiple Tables at Once
+
+### See What Tables Exist
+
+```{r}
+
+# Load all 5-yr variables to see available tables by CONCEPT
+all_vars_5 <- load_variables(2023, "acs5")
+
+# Get unique table IDs and their concepts
+all_tables_5 <- all_vars_5 %>%
+  mutate(table_id = str_extract(name, "^[A-Z][0-9]+")) %>%
+  group_by(table_id) %>%
+  summarise(concept = first(concept)) %>%
+  filter(!is.na(table_id))
+
+# # View tables related to schools/education
+# school_tables <- all_tables %>%
+#   filter(str_detect(tolower(concept), "school|education|enrollment"))
+
+View(all_tables_5)
+
+```
+
+
+```{r}
+
+# Pull entire tables using table parameter
+scuc_demographics <- get_acs(
+  geography = "school district (unified)",
+  state = "TX",
+  table = "B15003",    # Educational Attainment
+  year = 2023,
+  survey = "acs5",
+  cache_table = TRUE
+) %>%
+  filter(GEOID == "4839480")
+
+```
+
+
+## Finding Combinations of Attributes
+
+```{r}
+
+# Get the CORRECT variables
+female_marital_correct <- get_acs(
+  geography = "school district (unified)",
+  state = "TX",
+  variables = c(
+    total_15plus = "B12001_001",         # Total 15+
+    total_female = "B12001_011",         # Total Female 15+
+    female_never_married = "B12001_012"  # Female Never Married 15+
+  ),
+  year = 2023,
+  # output = "wide"
+) %>%
+  filter(GEOID == "4839480") %>%
+  mutate(
+    pct_female_never_married = round(100 * female_never_marriedE / total_femaleE, 1),
+    pct_female_of_total = round(100 * total_femaleE / total_15plusE, 1)
+  )
+
+
+# This shows all columns with their values in a vertical format
+dplyr::glimpse(female_marital_correct)
+
+```
+
+
+
+
+
+
+
+
+
+# Here are several ways to get the plain English names (labels) for the variables:
+
+#  Method 1: Use load_variables() to get labels
+
+```{r}
+
+# Here are several ways to get the plain English names (labels) for the variables:
+#  Method 1: Use load_variables() to get labels
+
+# Get the variable labels
+var_labels <- load_variables(2023, "acs5")
+
+# Pull your data
+scuc_demographics <- get_acs(
+  geography = "school district (unified)",
+  state = "TX",
+  table = "B15003",
+  year = 2023,
+  cache_table = TRUE
+) %>%
+  filter(GEOID == "4839480")
+
+# Join with labels
+scuc_with_labels <- scuc_demographics %>%
+  left_join(
+    var_labels %>% select(name, label),
+    by = c("variable" = "name")
+  )
+
+# View the result
+scuc_with_labels %>%
+  select(NAME, variable, label, estimate, moe)
+
+```
+
+
+# Method 2: Create a lookup table for specific table (retains !! in label)
+
+```{r}
+
+# Get labels just for B15003 table
+b15003_labels <- load_variables(2023, "acs5") %>%
+  filter(str_starts(name, "B15003")) %>%
+  select(variable = name, label)
+
+# Pull data and join
+scuc_demographics <- get_acs(
+  geography = "school district (unified)",
+  state = "TX",
+  table = "B15003",
+  year = 2023,
+  cache_table = TRUE
+) %>%
+  filter(GEOID == "4839480") %>%
+  left_join(b15003_labels, by = "variable")
+
+# View with nice formatting
+scuc_demographics %>%
+  select(label, estimate, moe) %>%
+  print(n = 30)
+
+```
+
+
+# Method 3: Use named vector when pulling specific variables (eliminates !! from label)
+
+```{r}
+
+# Create named vector of variables
+education_vars <- c(
+  "Total Population 25 years and over" = "B15003_001",
+  "No schooling completed" = "B15003_002",
+  "Nursery school" = "B15003_003",
+  "Kindergarten" = "B15003_004",
+  "1st grade" = "B15003_005",
+  "High school graduate" = "B15003_017",
+  "Some college, no degree" = "B15003_019",
+  "Associate's degree" = "B15003_021",
+  "Bachelor's degree" = "B15003_022",
+  "Master's degree" = "B15003_023",
+  "Professional school degree" = "B15003_024",
+  "Doctorate degree" = "B15003_025"
+)
+
+# Pull with readable names
+scuc_education <- get_acs(
+  geography = "school district (unified)",
+  state = "TX",
+  variables = education_vars,
+  year = 2023
+) %>%
+  filter(GEOID == "4839480")
+
+```
+
+
+
+# Method 4: Create a clean output table
+
+## With No GEOID or District labels
+
+```{r}
+
+# Pull data with labels
+scuc_clean <- get_acs(
+  geography = "school district (unified)",
+  state = "TX",
+  table = "B15003",
+  year = 2023,
+  cache_table = TRUE
+) %>%
+  filter(GEOID == "4839480") %>%
+  # Add labels
+  left_join(
+    load_variables(2023, "acs5") %>% 
+      select(variable = name, label),
+    by = "variable"
+  ) %>%
+  # Clean up the labels (remove the "Estimate!!" prefix)
+  mutate(
+    label_clean = str_remove(label, "^Estimate!!"),
+    label_clean = str_replace_all(label_clean, "!!", " - ")
+  ) %>%
+  # Select and arrange
+  select(
+    Variable = variable,
+    Description = label_clean,
+    Estimate = estimate,
+    MOE = moe
+  ) %>%
+  arrange(Variable)
+
+# View it
+print(scuc_clean, n = 30)
+
+```
+
+
+
+# Method 5: Create a formatted summary
+
+## Education_Level, Estimate and Pct columns only
+
+```{r}
+
+# Create a nice summary table
+scuc_education_summary <- get_acs(
+  geography = "school district (unified)",
+  state = "TX",
+  table = "B15003",
+  year = 2023,
+  cache_table = TRUE
+) %>%
+  filter(GEOID == "4839480") %>%
+  left_join(
+    load_variables(2023, "acs5") %>% 
+      filter(str_starts(name, "B15003")) %>%
+      select(variable = name, label),
+    by = "variable"
+  ) %>%
+  mutate(
+    # Clean labels
+    education_level = str_remove(label, "^Estimate!!Total:!!"),
+    # Calculate percentages
+    pct = round(100 * estimate / estimate[variable == "B15003_001"], 1)
+  ) %>%
+  filter(variable != "B15003_001") %>%  # Remove total
+  select(education_level, estimate, pct) %>%
+  arrange(desc(estimate))
+
+print(scuc_education_summary)
+
+```
+
+
+# Method 6: Export to a readable format
+
+## Variable code + Variable name + Estimate + MOE
+
+```{r}
+
+# Create a full table with labels
+scuc_full_table <- get_acs(
+  geography = "school district (unified)",
+  state = "TX",
+  table = "B15003",
+  year = 2023,
+  cache_table = TRUE
+) %>%
+  filter(GEOID == "4839480") %>%
+  left_join(
+    load_variables(2023, "acs5") %>% 
+      select(variable = name, label),
+    by = "variable"
+  ) %>%
+  mutate(
+    label_clean = str_remove(label, "^Estimate!!Total:!!"),
+    label_clean = ifelse(variable == "B15003_001", "Total Population 25 years and over", label_clean)
+  ) %>%
+  select(
+    Code = variable,
+    `Education Level` = label_clean,
+    Estimate = estimate,
+    `Margin of Error` = moe
+  )
+
+View(scuc_full_table)
+
+
+# Save to CSV
+# write_csv(scuc_full_table, "scuc_education_attainment.csv")
+
+
+# Or create an Excel file with formatting
+# library(openxlsx)
+# write.xlsx(scuc_full_table, "scuc_education_attainment.xlsx")
+
+```
+
+
+
+### Get some data for Guadalupe County, TX
+
+```{r}
+
+# Get data for Guadalupe County, TX
+median_home_value_guad <- get_acs(
+  geography = "county",
+  state = "TX",
+  county = "Guadalupe",
+  variables = "B25077_001",
+  year = 2023
+)
+
+median_home_value_guad
+
+```
+
+
+
+
+
+
+# Get some 1-year data for Guadalupe County, TX
+
+```{r}
+
+# Get 1-year data for Guadalupe County, TX
+median_home_value_1_guad <- get_acs(
+  geography = "county",
+  state = "TX",
+  county = "Guadalupe",
+  variables = "B25077_001",
+  year = 2023
+)
+
+
+median_home_value_1_guad
+
+```
+
+
