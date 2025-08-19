@@ -285,7 +285,7 @@ all_districts <- get_acs(
   year = 2023,
   survey = "acs5"
 ) %>%
-  distinct(NAME)
+  distinct(NAME) 
 
 
 # Search only for specific district full name (no variables)
