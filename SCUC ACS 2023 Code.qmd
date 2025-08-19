@@ -117,7 +117,7 @@ knitr:
 
 # Prevent scientific notation globally
 options(scipen = 999)
-
+options(device = "quartz")  # macOS native graphics device
 options(tigris_use_cache = TRUE)
 
 # install.packages(c("mapview", "survey", "srvyr", "arcgislayers"))
@@ -215,7 +215,7 @@ set.seed(123)
 ```{r}
 
 # Get ACS 5-year data for all school districts in Texas
-tx_schools_5 <- get_acs(
+tx_schools_acs5 <- get_acs(
   geography = "school district (unified)",
   state = "TX",
   variables = c(
@@ -227,12 +227,12 @@ tx_schools_5 <- get_acs(
   survey = "acs5"
 )
 
-View(tx_schools_5)
+View(tx_schools_acs5)
 
 
 
 # Now, use ACS 1-year data 
-tx_schools_1 <- get_acs(
+tx_schools_acs1 <- get_acs(
   geography = "school district (unified)",
   state = "TX",
   variables = c(
@@ -244,7 +244,7 @@ tx_schools_1 <- get_acs(
   survey = "acs1"
 )
 
-View(tx_schools_1)
+View(tx_schools_acs1)
 
 
 ```
@@ -255,19 +255,19 @@ View(tx_schools_1)
 
 ```{r}
 
-# Method 1: Filter after pulling all districts
-scuc_full_name1_5 <- tx_schools_5 %>%
+# Method 1: Filter after pulling all districts (Schertz ID = 4839480)
+scuc_full_name1_acs5 <- tx_schools_acs5 %>%
   filter(str_detect(NAME, "Schertz"))
 
-View(scuc_full_name1_5)
+View(scuc_full_name1_acs5)
 
 
 # Now, use ACS 1-year data 
 
-scuc_full_name1_1 <- tx_schools_1 %>%
+scuc_full_name1_acs1 <- tx_schools_acs1 %>%
   filter(str_detect(NAME, "Schertz"))
 
-View(scuc_full_name1_1)
+View(scuc_full_name1_acs1)
 
 
 
@@ -289,10 +289,10 @@ all_districts <- get_acs(
 
 
 # Search only for specific district full name (no variables)
-scuc_full_name2_5 <- all_districts %>%
+scuc_full_name2_acs5 <- all_districts %>%
   filter(str_detect(NAME, "Schertz"))
 
-View(scuc_full_name2_5)
+View(scuc_full_name2_acs5)
 
 
 # Now, use 1-year data
@@ -313,10 +313,10 @@ all_districts <- get_acs(
 
 
 # Search only for specific district full name (no variables)
-scuc_full_name2_1 <- all_districts %>%
+scuc_full_name2_acs1 <- all_districts %>%
   filter(str_detect(NAME, "Schertz"))
 
-View(scuc_full_name2_1)
+View(scuc_full_name2_acs1)
 
 ```
 
@@ -327,7 +327,7 @@ View(scuc_full_name2_1)
 ```{r}
 
 # All Elementary districts in TX using 5-year
-elem_districts_5 <- get_acs(
+elem_districts_acs5 <- get_acs(
   geography = "school district (elementary)",
   state = "TX",
   variables = "B01003_001",
@@ -335,13 +335,13 @@ elem_districts_5 <- get_acs(
   survey = "acs5"
 )
 
-View(elem_districts_5)
+View(elem_districts_acs5)
 
 # Too small to use 1-year
 
 
 # Secondary districts using 5-yr
-secondary_districts_5 <- get_acs(
+secondary_districts_acs5 <- get_acs(
   geography = "school district (secondary)",
   state = "TX",
   variables = "B01003_001",
@@ -349,14 +349,14 @@ secondary_districts_5 <- get_acs(
   survey = "acs5"
 )
 
-View(secondary_districts_5)
+View(secondary_districts_acs5)
 
 
 # Too small to use 1-yr
 
 
 # Unified districts (most common - includes both elementary and secondary)
-unified_districts_5 <- get_acs(
+unified_districts_acs5 <- get_acs(
   geography = "school district (unified)",
   state = "TX",
   variables = "B01003_001",
@@ -374,7 +374,7 @@ View(unified_districts)
 ```{r}
 
 # Pull comprehensive data for Texas school districts 5-year
-tx_school_data_5 <- get_acs(
+tx_school_data_acs5 <- get_acs(
   geography = "school district (unified)",
   state = "TX",
   variables = c(
@@ -393,15 +393,15 @@ tx_school_data_5 <- get_acs(
 
 
 # Filter for specific district
-scuc_multi_vars_5 <- tx_school_data_5 %>%
+scuc_multi_vars_acs5 <- tx_school_data_acs5 %>%
   filter(str_detect(NAME, "Schertz"))
 
-View(scuc_multi_vars_5)
+View(scuc_multi_vars_acs5)
 
 
 
 # Now, use 1 year data
-tx_school_data_1 <- get_acs(
+tx_school_data_acs1 <- get_acs(
   geography = "school district (unified)",
   state = "TX",
   variables = c(
@@ -420,10 +420,10 @@ tx_school_data_1 <- get_acs(
 
 
 # Filter for specific district
-scuc_multi_vars_1 <- tx_school_data_1 %>%
+scuc_multi_vars_acs1 <- tx_school_data_acs1 %>%
   filter(str_detect(NAME, "Schertz"))
 
-View(scuc_multi_vars_1)
+View(scuc_multi_vars_acs1)
 
 ```
 
@@ -435,7 +435,7 @@ View(scuc_multi_vars_1)
 ```{r}
 
 # GEOIDs for TX school districts start with "48" (TX FIPS code) 5 year
-scuc_no_diploma_with_geometry_5 <- get_acs(
+scuc_no_diploma_with_geometry_acs5 <- get_acs(
   geography = "school district (unified)",
   state = "TX",
   variables = c(
@@ -448,11 +448,11 @@ scuc_no_diploma_with_geometry_5 <- get_acs(
   filter(GEOID == "4839480")  # SCUC-ISD GEOID
 
 
-View(scuc_no_diploma_with_geometry_5)
+View(scuc_no_diploma_with_geometry_acs5)
 
 
 # Now, use 1-year data
-scuc_no_diploma_with_geometry_1 <- get_acs(
+scuc_no_diploma_with_geometry_acs1 <- get_acs(
   geography = "school district (unified)",
   state = "TX",
   variables = c(
@@ -465,7 +465,7 @@ scuc_no_diploma_with_geometry_1 <- get_acs(
   filter(GEOID == "4839480")  # SCUC-ISD GEOID
 
 
-View(scuc_no_diploma_with_geometry_1)
+View(scuc_no_diploma_with_geometry_acs1)
 
 ```
 
@@ -475,7 +475,7 @@ View(scuc_no_diploma_with_geometry_1)
 ```{r}
 
 # Pull many variables at once from 5-yr data
-district_comprehensive_5 <- get_acs(
+district_comprehensive_acs5 <- get_acs(
   geography = "school district (unified)",
   state = "TX",
   variables = c(
@@ -506,8 +506,8 @@ district_comprehensive_5 <- get_acs(
     median_rent = "B25064_001",
     
     # Age groups
-    under_5 = "B01001_003",
-    age_5_17 = "B09001_001"  # School age population
+    under_acs5 = "B01001_003",
+    age_acs5_17 = "B09001_001"  # School age population
   ),
   year = 2023,
   survey = "acs5"
@@ -515,11 +515,11 @@ district_comprehensive_5 <- get_acs(
 ) %>%
   filter(GEOID == "4839480")
 
-View(district_comprehensive_5)
+View(district_comprehensive_acs5)
 
 
 # Now using 1-year data
-district_comprehensive_1 <- get_acs(
+district_comprehensive_acs1 <- get_acs(
   geography = "school district (unified)",
   state = "TX",
   variables = c(
@@ -557,8 +557,8 @@ district_comprehensive_1 <- get_acs(
     median_rent = "B25064_001",
     
     # Age groups
-    under_5 = "B01001_003",
-    age_5_17 = "B09001_001"  # School age population
+    under_acs5 = "B01001_003",
+    age_acs5_17 = "B09001_001"  # School age population
   ),
   year = 2023,
   survey = "acs1"
@@ -566,7 +566,7 @@ district_comprehensive_1 <- get_acs(
 ) %>%
   filter(GEOID == "4839480")
 
-View(district_comprehensive_1)
+View(district_comprehensive_acs1)
 
 ```
 
@@ -576,26 +576,26 @@ View(district_comprehensive_1)
 ```{r}
 
 # Load all available 5-year variables to explore
-all_vars_5 <- load_variables(2023, "acs5")
+all_vars_acs5 <- load_variables(2023, "acs5")
 
 # Search for education-related variables
-education_vars_5 <- all_vars_5 %>%
+education_vars_acs5 <- all_vars_acs5 %>%
   filter(str_detect(concept, regex("educational", ignore_case = TRUE)))
 
 
-View(education_vars_5)
+View(education_vars_acs5)
 
 
 
 # Load all available 1-year variables to explore
-all_vars_1 <- load_variables(2023, "acs1")
+all_vars_acs1 <- load_variables(2023, "acs1")
 
 # Search for education-related variables
-education_vars_1 <- all_vars_1 %>%
+education_vars_acs1 <- all_vars_acs1 %>%
   filter(str_detect(concept, regex("educational", ignore_case = TRUE)))
 
 
-View(education_vars_1)
+View(education_vars_acs1)
 
 
 ```
@@ -621,10 +621,10 @@ View(education_vars_1)
 ```{r}
 
 # Load all 5-yr variables to see available tables by CONCEPT
-all_vars_5 <- load_variables(2023, "acs5")
+all_vars_acs5 <- load_variables(2023, "acs5")
 
 # Get unique table IDs and their concepts
-all_tables_5 <- all_vars_5 %>%
+all_tables_acs5 <- all_vars_acs5 %>%
   mutate(table_id = str_extract(name, "^[A-Z][0-9]+")) %>%
   group_by(table_id) %>%
   summarise(concept = first(concept)) %>%
@@ -634,7 +634,7 @@ all_tables_5 <- all_vars_5 %>%
 # school_tables <- all_tables %>%
 #   filter(str_detect(tolower(concept), "school|education|enrollment"))
 
-View(all_tables_5)
+View(all_tables_acs5)
 
 ```
 
@@ -939,7 +939,7 @@ median_home_value_guad
 ```{r}
 
 # Get 1-year data for Guadalupe County, TX
-median_home_value_1_guad <- get_acs(
+median_home_value_acs1_guad <- get_acs(
   geography = "county",
   state = "TX",
   county = "Guadalupe",
@@ -948,7 +948,7 @@ median_home_value_1_guad <- get_acs(
 )
 
 
-median_home_value_1_guad
+median_home_value_acs1_guad
 
 ```
 

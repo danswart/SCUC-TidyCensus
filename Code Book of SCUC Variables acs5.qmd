@@ -1,0 +1,291 @@
+---
+title: "Code Book of SCUC ACS5 Variables"
+format: html
+editor: 
+  markdown: 
+    wrap: 72
+---
+
+
+::: callout-important
+## "recode = TRUE"   only available with PUMS data
+:::
+
+
+
+```{r}
+#| label: setup
+
+
+library(tidyverse)
+library(tidycensus)
+
+# Master list of all variables for filtering
+acs5_school_vars_2023 <- load_variables(2023, "acs5", cache = TRUE) %>% 
+   filter(str_detect(label, regex("school", ignore_case = TRUE)))
+
+```
+
+
+
+
+```{r}
+
+library(tidyverse)
+library(tidycensus)
+
+# Sample of Variables Concerning SCUC-ISD available in ACS 5-year dataset
+scuc_example_variables_acs5 <- get_acs(
+ geography = "school district (unified)",
+ state = "TX",
+ variables = c(
+   median_hh_income = "B19013_001",   # Median household income
+   pop_in_poverty = "B17001_002",      # Population in poverty
+   total_district_pop = "B14001_001",   # Estimate!!Total:
+   total_enrolled_all_levels = "B14001_002",   # Estimate!!Total:!!Enrolled in school:
+   nursery_school = "B14001_003",   # Estimate!!Total:!!Enrolled in school:!!Enrolled in nursery school, preschool
+   kindergarten = "B14001_004",   # Estimate!!Total:!!Enrolled in school:!!Enrolled in kindergarten
+   grade_1_to_grade_4 = "B14001_005",   # Estimate!!Total:!!Enrolled in school:!!Enrolled in grade 1 to grade 4
+   grade_5_to_grad_8 = "B14001_006",   # Estimate!!Total:!!Enrolled in school:!!Enrolled in grade 5 to grade 8
+   grade_9_to_grade_12 = "B14001_007",   # Estimate!!Total:!!Enrolled in school:!!Enrolled in grade 9 to grade 12
+   college_undergraduate_years = "B14001_008",   # Estimate!!Total:!!Enrolled in school:!!Enrolled in college, undergraduate years
+   graduate_or_prof_school = "B14001_009",   # Estimate!!Total:!!Enrolled in school:!!Graduate or professional school
+   not_enrolled_in_school = "B14001_010",   # Estimate!!Total:!!Not enrolled in school
+   total_district_pop_3yrsandolder = "B14002_001",  # Estimate!!Total:Sex by School Enrollment by Level of School by Type of School for the Population 3 Years and Over
+   total_district_male = "B14002_002",  # Estimate!!Total:!!Male:
+   total_enrolled_male = "B14002_003",   # Estimate!!Total:!!Male:!!Enrolled in school:
+   nursery_school_male = "B14002_004",   # Enrolled in nursery school, preschool
+   "B14002_005",
+   "B14002_006",
+   "B14002_007",
+   "B14002_008",
+   "B14002_009",
+   "B14002_010",
+   
+   total_enrolled_female = "B14002_027",     # Estimate!!Total:!!Female:!!Enrolled in school:
+   total_district_female = "B14002_026",   # Estimate!!Total:!!Female:
+   nursery_school_preschool_male = "B14002_004"   # Male:!!Enrolled in nursery school, preschool:
+   
+   
+   
+ ),
+ year = 2023,
+ survey = "acs5",
+ geometry = TRUE
+) %>% 
+  filter(str_detect(NAME, "Schertz"))
+
+```
+
+### Pull Table B14001 (school enrollment data) for SCUC
+
+```{r}
+
+library(tidycensus)
+library(tidyverse)
+
+# Pull the full B14001 table for all TX school districts
+tx_schools_table_b14001 <- get_acs(
+  geography = "school district (unified)",
+  state = "TX",
+  table = "B14001",
+  year = 2023,
+  survey = "acs5"
+)
+
+# Attach variable labels
+acs5_all_vars_2023 <- load_variables(2023, "acs5", cache = TRUE)
+
+tx_schools_table_b14001_labeled <- tx_schools_table_b14001 %>%
+  left_join(acs5_all_vars_2023, by = c("variable" = "name"))
+
+# Filter to SCUC-ISD by GEOID
+scuc_enrollment_table_b14001_labeled <- tx_schools_table_b14001_labeled %>%
+  filter(GEOID == "4839480") %>%
+  select(variable, label)
+
+
+
+```
+
+### Save table(s)
+
+```{r}
+
+# Save as RDS
+saveRDS(scuc_enrollment_table_b14001_labeled, "scuc data/scuc_enrollment_table_b14001_labeled.rds")
+
+# # Load RDS later
+# scuc_enrollment_table_b14001_labeled <- readRDS("scuc data/scuc_enrollment_table_b14001_labeled.rds")
+
+
+# Save as CSV
+write_csv(scuc_enrollment_table_b14001_labeled, "scuc data/scuc_enrollment_table_b14001_labeled.csv")
+
+# # Load CSV later
+# scuc_enrollment_table_b14001_labeled <- read_csv("scuc data/scuc_enrollment_table_b14001_labeled.csv")
+
+
+library(writexl)
+
+write_xlsx(scuc_enrollment_table_b14001_labeled, "scuc data/scuc_enrollment_table_b14001_labeled.xlsx")
+
+
+#####  END OF SCUC ENROLLMENT TABLE RETRIEVAL  #####
+
+```
+
+
+### Pull Table B14002 (school enrollment by sex) for SCUC
+
+```{r}
+
+library(tidycensus)
+library(tidyverse)
+
+# Pull the full B14002 table for all TX school districts
+tx_schools_table_b14002 <- get_acs(
+  geography = "school district (unified)",
+  state = "TX",
+  table = "B14002",
+  year = 2023,
+  survey = "acs5"
+)
+
+# Attach variable labels
+acs5_all_vars_2023 <- load_variables(2023, "acs5", cache = TRUE)
+
+tx_schools_table_b14002_labeled <- tx_schools_table_b14002 %>%
+  left_join(acs5_all_vars_2023, by = c("variable" = "name"))
+
+# Filter to SCUC-ISD by GEOID
+scuc_enrollment_by_sex_table_b14002_labeled <- tx_schools_table_b14002_labeled %>%
+  filter(GEOID == "4839480") %>%
+  select(variable, label)
+
+
+
+```
+
+### Save table in 3 formats
+
+```{r}
+
+# Save as RDS
+saveRDS(scuc_enrollment_by_sex_table_b14002_labeled , "scuc data/scuc_enrollment_by_sex_table_b14002_labeled.rds")
+
+# # Load RDS later
+# sscuc_enrollment_by_sex_table_b14002_labeled <- readRDS("scuc data/scuc_enrollment_by_sex_table_b14002_labeled .rds")
+
+
+# Save as CSV
+write_csv(scuc_enrollment_by_sex_table_b14002_labeled , "scuc data/scuc_enrollment_by_sex_table_b14002_labeled.csv")
+
+# # Load CSV later
+# sscuc_enrollment_by_sex_table_b14002_labeled <- read_csv("scuc data/scuc_enrollment_by_sex_table_b14002_labeled.csv")
+
+
+library(writexl)
+
+write_xlsx(scuc_enrollment_by_sex_table_b14002_labeled, "scuc data/scuc_enrollment_by_sex_table_b14002_labeled.xlsx")
+
+
+#####  END OF SCUC ENROLLMENT BY SEX TABLE RETRIEVAL  #####
+
+```
+
+
+
+
+
+
+
+
+
+
+
+B14002_004 Estimate!!Total:!!Male:!!Enrolled in school:!!: Sex by School Enrollment by Level of School
+by Type of School for the Population 3 Years and Over
+
+B14002_005 Estimate!!Total:!!Male:!!Enrolled in school:!!Enrolled in
+nursery school, preschool:!!Public school Sex by School Enrollment by
+Level of School by Type of School for the Population 3 Years and Over
+
+B14002_006 Estimate!!Total:!!Male:!!Enrolled in school:!!Enrolled in
+nursery school, preschool:!!Private school Sex by School Enrollment by
+Level of School by Type of School for the Population 3 Years and Over
+
+B14002_007 Estimate!!Total:!!Male:!!Enrolled in school:!!Enrolled in
+kindergarten: Sex by School Enrollment by Level of School by Type of
+School for the Population 3 Years and Over
+
+B14002_008 Estimate!!Total:!!Male:!!Enrolled in school:!!Enrolled in
+kindergarten:!!Public school Sex by School Enrollment by Level of School
+by Type of School for the Population 3 Years and Over
+
+B14002_009 Estimate!!Total:!!Male:!!Enrolled in school:!!Enrolled in
+kindergarten:!!Private school Sex by School Enrollment by Level of
+School by Type of School for the Population 3 Years and Over
+
+B14002_010 Estimate!!Total:!!Male:!!Enrolled in school:!!Enrolled in
+grade 1 to grade 4: Sex by School Enrollment by Level of School by Type
+of School for the Population 3 Years and Over
+
+B14002_011 Estimate!!Total:!!Male:!!Enrolled in school:!!Enrolled in
+grade 1 to grade 4:!!Public school Sex by School Enrollment by Level of
+School by Type of School for the Population 3 Years and Over
+
+B14002_012 Estimate!!Total:!!Male:!!Enrolled in school:!!Enrolled in
+grade 1 to grade 4:!!Private school Sex by School Enrollment by Level of
+School by Type of School for the Population 3 Years and Over
+
+B14002_013 Estimate!!Total:!!Male:!!Enrolled in school:!!Enrolled in
+grade 5 to grade 8: Sex by School Enrollment by Level of School by Type
+of School for the Population 3 Years and Over
+
+B14002_014 Estimate!!Total:!!Male:!!Enrolled in school:!!Enrolled in
+grade 5 to grade 8:!!Public school Sex by School Enrollment by Level of
+School by Type of School for the Population 3 Years and Over
+
+B14002_015 Estimate!!Total:!!Male:!!Enrolled in school:!!Enrolled in
+grade 5 to grade 8:!!Private school Sex by School Enrollment by Level of
+School by Type of School for the Population 3 Years and Over
+
+B14002_016 Estimate!!Total:!!Male:!!Enrolled in school:!!Enrolled in
+grade 9 to grade 12: Sex by School Enrollment by Level of School by Type
+of School for the Population 3 Years and Over
+
+B14002_017 Estimate!!Total:!!Male:!!Enrolled in school:!!Enrolled in
+grade 9 to grade 12:!!Public school Sex by School Enrollment by Level of
+School by Type of School for the Population 3 Years and Over
+
+B14002_018 Estimate!!Total:!!Male:!!Enrolled in school:!!Enrolled in
+grade 9 to grade 12:!!Private school Sex by School Enrollment by Level
+of School by Type of School for the Population 3 Years and Over
+
+B14002_019 Estimate!!Total:!!Male:!!Enrolled in school:!!Enrolled in
+college undergraduate years: Sex by School Enrollment by Level of School
+by Type of School for the Population 3 Years and Over
+
+B14002_020 Estimate!!Total:!!Male:!!Enrolled in school:!!Enrolled in
+college undergraduate years:!!Public school Sex by School Enrollment by
+Level of School by Type of School for the Population 3 Years and Over
+
+B14002_021 Estimate!!Total:!!Male:!!Enrolled in school:!!Enrolled in
+college undergraduate years:!!Private school Sex by School Enrollment by
+Level of School by Type of School for the Population 3 Years and Over
+
+B14002_022 Estimate!!Total:!!Male:!!Enrolled in school:!!Enrolled in
+graduate or professional school: Sex by School Enrollment by Level of
+School by Type of School for the Population 3 Years and Over
+
+B14002_023 Estimate!!Total:!!Male:!!Enrolled in school:!!Enrolled in
+graduate or professional school:!!Public school Sex by School Enrollment
+by Level of School by Type of School for the Population 3 Years and Over
+
+B14002_024 Estimate!!Total:!!Male:!!Enrolled in school:!!Enrolled in
+graduate or professional school:!!Private school Sex by School
+Enrollment by Level of School by Type of School for the Population 3
+Years and Over b B14002_025 Estimate!!Total:!!Male:!!Not enrolled in
+school
+
