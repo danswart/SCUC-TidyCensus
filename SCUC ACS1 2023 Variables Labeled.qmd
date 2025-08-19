@@ -1,0 +1,433 @@
+---
+title: "Code Book of SCUC ACS1 Variables"
+format: html
+editor: 
+  markdown: 
+    wrap: 72
+---
+
+
+::: callout-important
+## "recode = TRUE"   only available with PUMS data
+:::
+
+
+### Geographies Available to ACS1
+
+1 us
+2 region
+3 division
+4 state
+5 county
+6 place
+7 metropolitan statistical area/micropolitan statistical area
+8 congressional district
+9 public use microdata area
+10 school district (unified)
+11 urban area
+
+
+```{r}
+#| label: setup
+
+
+library(tidyverse)
+library(tidycensus)
+library(writexl)
+
+# Master list of all school variables for filtering
+tx_school_acs1_vars_2023 <- load_variables(2023, "acs1", cache = TRUE) %>% 
+   filter(str_detect(label, regex("school", ignore_case = TRUE)))
+
+```
+
+
+
+
+```{r}
+
+library(tidyverse)
+library(tidycensus)
+
+# Sample of Variables Concerning SCUC-ISD available in ACS 5-year dataset
+scuc_example_acs1_variables <- get_acs(
+ geography = "school district (unified)",
+ state = "TX",
+ variables = c(
+   median_hh_income = "B19013_001",   # Median household income
+   pop_in_poverty = "B17001_002",      # Population in poverty
+   total_district_pop = "B14001_001",   # Estimate!!Total:
+   total_enrolled_all_levels = "B14001_002",   # Total Enrolled in school
+   nursery_school = "B14001_003",   # Enrolled in nursery school, preschool
+   kindergarten = "B14001_004",   #  Enrolled in kindergarten
+   grade_1_to_grade_4 = "B14001_005",   # Enrolled in grade 1 to grade 4
+   grade_5_to_grad_8 = "B14001_006",   # Enrolled in grade 5 to grade 8
+   grade_9_to_grade_12 = "B14001_007",   # Enrolled in grade 9 to grade 12
+   college_undergraduate_years = "B14001_008",   # Enrolled in college, undergraduate years
+   graduate_or_prof_school = "B14001_009",   # Graduate or professional school
+   not_enrolled_in_school = "B14001_010",   # Not enrolled in school
+   total_district_pop_3yrsandolder = "B14002_001",  # Total both sexes
+   total_district_male = "B14002_002",  # male in district Total
+   total_enrolled_male = "B14002_003",   # male Enrolled Total
+   nursery_school_male = "B14002_004",   # Male Nursery Total
+   "B14002_005",  # Male Nursery Public
+   "B14002_006",  # Male Nursery Private
+   "B14002_007",  # Male kindergarten Total
+   "B14002_008",  # Male kindergarten Public 
+   "B14002_009",  # Male kindergarten Private 
+   "B14002_010",  # Male grade 1 to grade 4 Total
+   "B14002_011",  # Male grade 1 to grade 4 Public
+   "B14002_012",  # Male grade 1 to grade 4 Private
+   "B14002_013",  # Male grade 5 to grade 8 Total
+   "B14002_014",  # Male grade 5 to grade 8 Public 
+   "B14002_015",  # Male grade 5 to grade 8 Private
+   "B14002_016",  # Male grade 9 to grade 12 Total
+   "B14002_017",  # Male grade 9 to grade 12 Public
+   
+   
+   total_enrolled_female = "B14002_027",     # Estimate!!Total:!!Female:!!Enrolled in school:
+   total_district_female = "B14002_026",   # Estimate!!Total:!!Female:
+   nursery_school_preschool_male = "B14002_004"   # Male:!!Enrolled in nursery school, preschool:
+   
+   
+   
+ ),
+ year = 2023,
+ survey = "acs1",
+ geometry = TRUE
+) %>% 
+  filter(str_detect(NAME, "Schertz"))
+
+```
+
+
+
+### Pull ACS Table B14001 (school enrollment data) for SCUC
+
+```{r}
+
+library(tidycensus)
+library(tidyverse)
+
+# Pull the full B14001 table for all TX school districts
+tx_schools_acs1_table_b14001 <- get_acs(
+  geography = "school district (unified)",
+  state = "TX",
+  table = "B14001",
+  year = 2023,
+  survey = "acs1"
+)
+
+# Attach variable labels
+tx_all_acs1_vars_2023 <- load_variables(2023, "acs1", cache = TRUE)
+
+tx_schools_acs1_table_b14001_labeled <- tx_schools_acs1_table_b14001 %>%
+  left_join(tx_all_acs1_vars_2023, by = c("variable" = "name"))
+
+# Filter to SCUC-ISD by GEOID
+scuc_enrollment_acs1_table_b14001_labeled <- tx_schools_acs1_table_b14001_labeled %>%
+  filter(GEOID == "4839480") %>%
+  select(variable, label)
+
+
+
+```
+
+### Save table(s)
+
+```{r}
+
+# Save as RDS
+saveRDS(scuc_enrollment_acs1_table_b14001_labeled, "scuc_data/scuc_enrollment_acs1_table_b14001_labeled.rds")
+
+# # Load RDS later
+# scuc_enrollment_acs1_table_b14001_labeled <- readRDS("scuc_data/scuc_enrollment_acs1_table_b14001_labeled.rds")
+
+
+# Save as CSV
+write_csv(scuc_enrollment_acs1_table_b14001_labeled, "scuc_data/scuc_enrollment_acs1_table_b14001_labeled.csv")
+
+# # Load CSV later
+# scuc_enrollment_acs1_table_b14001_labeled <- read_csv("scuc_data/sscuc_enrollment_acs1_table_b14001_labeled.csv")
+
+
+library(writexl)
+
+write_xlsx(scuc_enrollment_acs1_table_b14001_labeled, "scuc_data/scuc_enrollment_acs1_table_b14001_labeled.xlsx")
+
+
+#####  END OF SCUC ENROLLMENT TABLE RETRIEVAL  #####
+
+```
+
+
+
+
+### Pull ACS Table B14002 (school enrollment by SEX) for SCUC
+
+```{r}
+
+library(tidycensus)
+library(tidyverse)
+
+# Pull the full B14002 table for all TX school districts
+tx_schools_acs1_table_b14002 <- get_acs(
+  geography = "school district (unified)",
+  state = "TX",
+  table = "B14002",
+  year = 2023,
+  survey = "acs1"
+)
+
+# Attach variable labels
+tx_all_acs1_vars_2023 <- load_variables(2023, "acs1", cache = TRUE)
+
+tx_schools_acs1_table_b14002_labeled <- tx_schools_acs1_table_b14002 %>%
+  left_join(tx_all_acs1_vars_2023, by = c("variable" = "name"))
+
+# Filter to SCUC-ISD by GEOID
+scuc_enrollment_by_sex_acs1_table_b14002_labeled <- tx_schools_acs1_table_b14002_labeled %>%
+  filter(GEOID == "4839480") %>%
+  select(variable, label)
+
+
+
+```
+
+### Save table in 3 formats
+
+```{r}
+
+# Save as RDS
+saveRDS(scuc_enrollment_by_sex_acs1_table_b14002_labeled , "scuc_data/scuc_enrollment_by_sex_acs1_table_b14002_labeled.rds")
+
+# # Load RDS later
+# scuc_enrollment_by_sex_acs1_table_b14002_labeled <- readRDS("scuc_data/scuc_enrollment_by_sex_acs1_table_b14002_labeled.rds")
+
+
+# Save as CSV
+write_csv(scuc_enrollment_by_sex_acs1_table_b14002_labeled, "scuc_data/scuc_enrollment_by_sex_acs1_table_b14002_labeled.csv")
+
+# # Load CSV later
+# scuc_enrollment_by_sex_acs1_table_b14002_labeled <- read_csv("scuc_enrollment_by_sex_acs1_table_b14002_labeled.csv")
+
+
+library(writexl)
+
+write_xlsx(scuc_enrollment_by_sex_acs1_table_b14002_labeled, "scuc_data/scuc_enrollment_by_sex_acs1_table_b14002_labeled.xlsx")
+
+
+#####  END OF SCUC ENROLLMENT BY SEX TABLE RETRIEVAL  #####
+
+```
+
+
+
+
+
+
+## TABLE B14001 - GRAND TOTALS
+
+School Enrollment by Level of School for the Population 3 Years and Over
+
+B14001_001 Total:
+B14001_002 Total:Enrolled in school:
+B14001_003 Total:Enrolled in school:Enrolled in nursery school, preschool
+B14001_004 Total:Enrolled in school:Enrolled in kindergarten
+B14001_005 Total:Enrolled in school:Enrolled in grade 1 to grade 4
+B14001_006 Total:Enrolled in school:Enrolled in grade 5 to grade 8
+B14001_007 Total:Enrolled in school:Enrolled in grade 9 to grade 12
+B14001_008 Total:Enrolled in school:Enrolled in college, undergraduate years
+B14001_009 Total:Enrolled in school:Graduate or professional school
+B14001_010 Total:Not enrolled in school
+
+
+
+## TABLE B14002 - TOTALS BY GRADE LEVELS
+
+Sex by School Enrollment by Level of School by Type of School for the Population 3 Years and Over
+
+B14002_003 Male: total enrolled
+B14002_004 Male: nursery school, preschool: total
+B14002_005 Male: nursery school, preschool:Public
+B14002_006 Male: nursery school, preschool:Private
+B14002_007 Male: kindergarten:
+B14002_008 Male: kindergarten:!!Public 
+B14002_009 Male: kindergarten:!!Private
+B14002_010 Male: grade 1 to grade 4:
+B14002_011 Male: grade 1 to grade 4:Public
+B14002_012 Male: grade 1 to grade 4:Private 
+B14002_013 Male: grade 5 to grade 8:total
+B14002_014 Male: grade 5 to grade 8:Public 
+B14002_015 Male: grade 5 to grade 8:Private 
+B14002_016 Male: grade 9 to grade 12:total
+B14002_017 Male: grade 9 to grade 12:Puble
+B14002_018 Male: grade 9 to grade 12:Private
+B14002_019 Male: college undergraduate years:total
+B14002_020 Male: college undergraduate years:Puble
+B14002_021 Male: college undergraduate years:Private
+B14002_022 Male: graduate or professional school:total
+B14002_023 Male: graduate or professional school:Puble
+B14002_024 Male: graduate or professional school:Private
+B14002_025 Male: Not enrolled in school
+B14002_026 Female: grand total
+B14002_027 Female: Enrolled in school:
+B14002_028 Female: nursery school, preschool:
+B14002_029 Female: nursery school, preschool:Puble
+B14002_030 Female: nursery school, preschool:Private
+B14002_031 Female: kindergarten:
+B14002_032 Female: kindergarten:Puble
+B14002_033 Female: kindergarten:Private
+B14002_034 Female: grade 1 to grade 4:
+B14002_035 Female: grade 1 to grade 4:Puble
+B14002_036 Female: grade 1 to grade 4:Private
+B14002_037 Female: grade 5 to grade 8:
+B14002_038 Female: grade 5 to grade 8:Puble
+B14002_039 Female: grade 5 to grade 8:Private
+B14002_040 Female: grade 9 to grade 12:
+B14002_041 Female: grade 9 to grade 12:Puble
+B14002_042 Female: grade 9 to grade 12:Private
+B14002_043 Female: college undergraduate years:
+B14002_044 Female: college undergraduate years:Puble
+B14002_045 Female: college undergraduate years:Private
+B14002_046 Female: graduate or professional school:
+B14002_047 Female: graduate or professional school:Puble
+B14002_048 Female: graduate or professional school:Private
+B14002_049 Female: Not enrolled in school
+
+
+
+
+
+
+
+
+## Get ONLY tables applicable to school district level
+
+```{r}
+library(tidycensus)
+library(dplyr)
+library(purrr)
+library(stringr)
+
+# 1. Load all ACS5 2023 variables
+acs5_vars_2023 <- load_variables(2023, "acs5", cache = TRUE)
+
+# 2. Extract the table names (prefix before the underscore + digits)
+acs5_vars_2023 <- acs5_vars_2023 %>%
+  mutate(table = str_extract(name, "^[A-Z0-9]+"))
+
+table_list <- unique(acs5_vars_2023$table)
+
+# 3. Function to test if a table is available for school districts
+check_table <- function(tbl) {
+  tryCatch({
+    get_acs(
+      geography = "school district (unified)",
+      state = "TX",   # You can omit 'state' to check nationally
+      table = tbl,
+      year = 2023,
+      survey = "acs5",
+      cache_table = TRUE
+    )
+    tibble(table = tbl, available = TRUE)
+  }, error = function(e) {
+    tibble(table = tbl, available = FALSE)
+  })
+}
+
+# 4. Loop through all tables (this takes a while)
+availability <- map_dfr(table_list, check_table)
+
+# 5. Filter variables to only those in available tables
+acs5_vars_schooldistricts <- acs5_vars_2023 %>%
+  inner_join(availability %>% filter(available), by = "table") %>%
+  select(name, label, concept, table)
+
+acs5_vars_schooldistricts
+
+
+
+# Save as RDS
+saveRDS(acs5_vars_schooldistricts, "vars_tables/acs5_2023_vars_for_tx_schooldistricts.rds")
+
+# # Load RDS later
+# acs5_2023_vars_for_tx_schooldistricts <- readRDS("vars_tables/acs5_2023_vars_for_tx_schooldistricts.rds")
+
+
+# # Save as RData (you can save multiple objects together)
+# save(acs5_vars_schooldistricts, file = "vars_tables/acs5_2023_vars_for_tx_schooldistricts.RData")
+
+# # Load later (restores object(s) into your workspace)
+# load("vars_tables/acs5_2023_vars_for_tx_schooldistricts.RData")
+
+# # Save as CSV
+# write.csv(acs5_vars_schooldistricts, "vars_tables/acs5_2023_vars_for_tx_schooldistricts.csv", row.names = FALSE)
+
+# # Load later
+# acs5_2023_vars_for_tx_schooldistricts <- read.csv("vars_tables/acs5_2023_vars_for_tx_schooldistricts.csv")
+
+
+
+```
+
+
+
+
+### Reload vars_tables RDS files
+
+```{r}
+
+# Define cache path
+cache_file <- "vars_tables/acs5_2023_vars_for_tx_schooldistricts.rds"
+
+# Check if cached file exists
+if (file.exists(cache_file)) {
+  message("Loading cached acs5_2023_vars_for_tx_schooldistricts...")
+  acs5_2023_vars_for_tx_schooldistricts <- readRDS(cache_file)
+} else {
+  message("Building acs5_2023_vars_for_tx_schooldistricts and caching...")
+  
+  # --- Your code to build the object ---
+  acs5_2023_vars_for_tx_schooldistricts <- acs5_vars_2023 %>%
+    inner_join(availability %>% filter(available), by = "table") %>%
+    select(name, label, concept, table)
+  
+  # Save to disk for future use
+  saveRDS(acs5_2023_vars_for_tx_schooldistricts, "vars_tables/acs5_2023_vars_for_tx_schooldistricts.rds", cache_file)
+}
+
+```
+
+
+
+### Create Table of First Variable in Each ACS5 Table Available for School Districts
+
+This creates a List of Tables by Concept available to school district analysis
+
+```{r}
+
+# File path for cache
+cache_file <- "acs5_2023_firstvars_tx_schooldistricts.rds"
+
+if (file.exists(cache_file)) {
+  message("Loading cached version...")
+  acs5_2023_firstvars_tx_schooldistricts <- readRDS(cache_file)
+} else {
+  message("Building and caching fresh version...")
+
+  acs5_2023_firstvars_for_tx_schooldistricts <- acs5_vars_2023 %>%
+    inner_join(availability %>% filter(available), by = "table") %>%
+    filter(grepl("_001$", name)) %>%        # keep only first var in each table
+    select(name, label, concept, table)
+
+  # Save to disk for future use
+  saveRDS(acs5_2023_firstvars_for_tx_schooldistricts, "vars_tables/acs5_2023_firstvars_for_tx_schooldistricts.rds")
+}
+
+# Inspect
+head(acs5_2023_firstvars_for_tx_schooldistricts)
+
+```
+
+
