@@ -1,5 +1,5 @@
 ---
-title: "Code Book of SCUC ACS1 Variables"
+title: "SCUC ACS1 2023 Variables"
 format: html
 editor: 
   markdown: 
@@ -49,7 +49,7 @@ tx_school_acs1_vars_2023 <- load_variables(2023, "acs1", cache = TRUE) %>%
 library(tidyverse)
 library(tidycensus)
 
-# Sample of Variables Concerning SCUC-ISD available in ACS 5-year dataset
+# Sample of Variables Concerning SCUC-ISD available in ACS1 dataset
 scuc_example_acs1_variables <- get_acs(
  geography = "school district (unified)",
  state = "TX",
@@ -70,21 +70,21 @@ scuc_example_acs1_variables <- get_acs(
    total_district_male = "B14002_002",  # male in district Total
    total_enrolled_male = "B14002_003",   # male Enrolled Total
    nursery_school_male = "B14002_004",   # Male Nursery Total
-   "B14002_005",  # Male Nursery Public
-   "B14002_006",  # Male Nursery Private
-   "B14002_007",  # Male kindergarten Total
-   "B14002_008",  # Male kindergarten Public 
-   "B14002_009",  # Male kindergarten Private 
-   "B14002_010",  # Male grade 1 to grade 4 Total
-   "B14002_011",  # Male grade 1 to grade 4 Public
-   "B14002_012",  # Male grade 1 to grade 4 Private
-   "B14002_013",  # Male grade 5 to grade 8 Total
-   "B14002_014",  # Male grade 5 to grade 8 Public 
-   "B14002_015",  # Male grade 5 to grade 8 Private
-   "B14002_016",  # Male grade 9 to grade 12 Total
-   "B14002_017",  # Male grade 9 to grade 12 Public
-   
-   
+   Male_Nursery_Public = "B14002_005",  # Male_Nursery_Public
+   Male_Nursery_Private = "B14002_006",  # Male_Nursery_Private
+   Male_kindergarten_Total = "B14002_007",  # Male_kindergarten_Total
+   Male_kindergarten_Public = "B14002_008",  # Male_kindergarten_Public 
+   Male_kindergarten_Private = "B14002_009",  # Male_kindergarten_Private 
+   Male_grade_1_to_grade_4_Total = "B14002_010",  # Male_grade_1_to_grade_4_Total
+   Male_grade_1_to_grade_4_Public = "B14002_011",  # Male_grade_1_to_grade_4_Public
+   Male_grade_1_to_grade_4_Private = "B14002_012",  # Male_grade_1_to_grade_4_Private
+   Male_grade_5_to_grade_8_Total = "B14002_013",  # Male_grade_5_to_grade_8_Total
+   Male_grade_5_to_grade_8_Public = "B14002_014",  # Male_grade_5_to_grade_8_Public 
+   Male_grade_5_to_grade_8_Private = "B14002_015",  # Male_grade_5_to_grade_8_Private
+   Male_grade_9_to_grade_12_Total = "B14002_016",  # Male_grade_9_to_grade_12_Total
+   Male_grade_9_to_grade_12_Public = "B14002_017",  # Male_grade_9_to_grade_12_Public
+   Male_grade_9_to_grade_12_Private = "B14002_018", # Male_grade_9_to_grade_12_Private
+   C24090_001 = "C24090_001",  # Sex by Class of Worker for the Full-Time, Year-Round Civilian Employed Population 16 Years and Over
    total_enrolled_female = "B14002_027",     # Estimate!!Total:!!Female:!!Enrolled in school:
    total_district_female = "B14002_026",   # Estimate!!Total:!!Female:
    nursery_school_preschool_male = "B14002_004"   # Male:!!Enrolled in nursery school, preschool:
@@ -102,7 +102,7 @@ scuc_example_acs1_variables <- get_acs(
 
 
 
-### Pull ACS Table B14001 (school enrollment data) for SCUC
+### Pull 2023 ACS1 Table B14001 (school enrollment data) for SCUC
 
 ```{r}
 
@@ -163,7 +163,7 @@ write_xlsx(scuc_enrollment_acs1_table_b14001_labeled, "scuc_data/scuc_enrollment
 
 
 
-### Pull ACS Table B14002 (school enrollment by SEX) for SCUC
+### Pull 2023 ACS1 Table B14002 (school enrollment by SEX) for SCUC
 
 ```{r}
 
@@ -226,7 +226,7 @@ write_xlsx(scuc_enrollment_by_sex_acs1_table_b14002_labeled, "scuc_data/scuc_enr
 
 
 
-## TABLE B14001 - GRAND TOTALS
+## ACS1 TABLE B14001 - GRAND TOTALS
 
 School Enrollment by Level of School for the Population 3 Years and Over
 
@@ -243,7 +243,7 @@ B14001_010 Total:Not enrolled in school
 
 
 
-## TABLE B14002 - TOTALS BY GRADE LEVELS
+## ACS1 TABLE B14002 - TOTALS BY GRADE LEVELS
 
 Sex by School Enrollment by Level of School by Type of School for the Population 3 Years and Over
 
@@ -302,7 +302,9 @@ B14002_049 Female: Not enrolled in school
 
 
 
-## Get ONLY tables applicable to school district level
+## MASTER TABLE - Variables ONLY applicable to school district level
+
+(Takes a long time to run)
 
 ```{r}
 library(tidycensus)
@@ -310,14 +312,14 @@ library(dplyr)
 library(purrr)
 library(stringr)
 
-# 1. Load all ACS5 2023 variables
-acs5_vars_2023 <- load_variables(2023, "acs5", cache = TRUE)
+# 1. Load all ACS1 2023 variables
+acs1_vars_2023 <- load_variables(2023, "acs1", cache = TRUE)
 
 # 2. Extract the table names (prefix before the underscore + digits)
-acs5_vars_2023 <- acs5_vars_2023 %>%
+acs1_vars_2023 <- acs1_vars_2023 %>%
   mutate(table = str_extract(name, "^[A-Z0-9]+"))
 
-table_list <- unique(acs5_vars_2023$table)
+table_list <- unique(acs1_vars_2023$table)
 
 # 3. Function to test if a table is available for school districts
 check_table <- function(tbl) {
@@ -327,7 +329,7 @@ check_table <- function(tbl) {
       state = "TX",   # You can omit 'state' to check nationally
       table = tbl,
       year = 2023,
-      survey = "acs5",
+      survey = "acs1",
       cache_table = TRUE
     )
     tibble(table = tbl, available = TRUE)
@@ -340,32 +342,32 @@ check_table <- function(tbl) {
 availability <- map_dfr(table_list, check_table)
 
 # 5. Filter variables to only those in available tables
-acs5_vars_schooldistricts <- acs5_vars_2023 %>%
+acs1_vars_schooldistricts <- acs1_vars_2023 %>%
   inner_join(availability %>% filter(available), by = "table") %>%
   select(name, label, concept, table)
 
-acs5_vars_schooldistricts
+acs1_vars_schooldistricts
 
 
 
 # Save as RDS
-saveRDS(acs5_vars_schooldistricts, "vars_tables/acs5_2023_vars_for_tx_schooldistricts.rds")
+saveRDS(acs1_vars_schooldistricts, "vars_tables/acs1_2023_vars_for_tx_schooldistricts.rds")
 
 # # Load RDS later
-# acs5_2023_vars_for_tx_schooldistricts <- readRDS("vars_tables/acs5_2023_vars_for_tx_schooldistricts.rds")
+# acs1_2023_vars_for_tx_schooldistricts <- readRDS("vars_tables/acs1_2023_vars_for_tx_schooldistricts.rds")
 
 
 # # Save as RData (you can save multiple objects together)
-# save(acs5_vars_schooldistricts, file = "vars_tables/acs5_2023_vars_for_tx_schooldistricts.RData")
+# save(acs1_vars_schooldistricts, file = "vars_tables/acs1_2023_vars_for_tx_schooldistricts.RData")
 
 # # Load later (restores object(s) into your workspace)
-# load("vars_tables/acs5_2023_vars_for_tx_schooldistricts.RData")
+# load("vars_tables/acs1_2023_vars_for_tx_schooldistricts.RData")
 
 # # Save as CSV
-# write.csv(acs5_vars_schooldistricts, "vars_tables/acs5_2023_vars_for_tx_schooldistricts.csv", row.names = FALSE)
+# write.csv(acs1_vars_schooldistricts, "vars_tables/acs1_2023_vars_for_tx_schooldistricts.csv", row.names = FALSE)
 
 # # Load later
-# acs5_2023_vars_for_tx_schooldistricts <- read.csv("vars_tables/acs5_2023_vars_for_tx_schooldistricts.csv")
+# acs1_2023_vars_for_tx_schooldistricts <- read.csv("vars_tables/acs1_2023_vars_for_tx_schooldistricts.csv")
 
 
 
@@ -379,54 +381,54 @@ saveRDS(acs5_vars_schooldistricts, "vars_tables/acs5_2023_vars_for_tx_schooldist
 ```{r}
 
 # Define cache path
-cache_file <- "vars_tables/acs5_2023_vars_for_tx_schooldistricts.rds"
+cache_file <- "vars_tables/acs1_2023_vars_for_tx_schooldistricts.rds"
 
 # Check if cached file exists
 if (file.exists(cache_file)) {
-  message("Loading cached acs5_2023_vars_for_tx_schooldistricts...")
-  acs5_2023_vars_for_tx_schooldistricts <- readRDS(cache_file)
+  message("Loading cached acs1_2023_vars_for_tx_schooldistricts...")
+  acs1_2023_vars_for_tx_schooldistricts <- readRDS(cache_file)
 } else {
-  message("Building acs5_2023_vars_for_tx_schooldistricts and caching...")
+  message("Building acs1_2023_vars_for_tx_schooldistricts and caching...")
   
   # --- Your code to build the object ---
-  acs5_2023_vars_for_tx_schooldistricts <- acs5_vars_2023 %>%
+  acs1_2023_vars_for_tx_schooldistricts <- acs1_vars_2023 %>%
     inner_join(availability %>% filter(available), by = "table") %>%
     select(name, label, concept, table)
   
   # Save to disk for future use
-  saveRDS(acs5_2023_vars_for_tx_schooldistricts, "vars_tables/acs5_2023_vars_for_tx_schooldistricts.rds", cache_file)
+  saveRDS(acs1_2023_vars_for_tx_schooldistricts, "vars_tables/ACS1_2023_vars_for_tx_schooldistricts.rds", cache_file)
 }
 
 ```
 
 
 
-### Create Table of First Variable in Each ACS5 Table Available for School Districts
+### Create Table of First Variable if Each ACS1 Table Available for School Districts
 
-This creates a List of Tables by Concept available to school district analysis
+This creates a List of Tables by Concept that are available for school district analysis
 
 ```{r}
 
 # File path for cache
-cache_file <- "acs5_2023_firstvars_tx_schooldistricts.rds"
+cache_file <- "acs1_2023_firstvars_tx_schooldistricts.rds"
 
 if (file.exists(cache_file)) {
   message("Loading cached version...")
-  acs5_2023_firstvars_tx_schooldistricts <- readRDS(cache_file)
+  acs1_2023_firstvars_tx_schooldistricts <- readRDS(cache_file)
 } else {
   message("Building and caching fresh version...")
 
-  acs5_2023_firstvars_for_tx_schooldistricts <- acs5_vars_2023 %>%
+  acs1_2023_firstvars_for_tx_schooldistricts <- acs1_vars_2023 %>%
     inner_join(availability %>% filter(available), by = "table") %>%
     filter(grepl("_001$", name)) %>%        # keep only first var in each table
     select(name, label, concept, table)
 
   # Save to disk for future use
-  saveRDS(acs5_2023_firstvars_for_tx_schooldistricts, "vars_tables/acs5_2023_firstvars_for_tx_schooldistricts.rds")
+  saveRDS(acs1_2023_firstvars_for_tx_schooldistricts, "vars_tables/acs1_2023_firstvars_for_tx_schooldistricts.rds")
 }
 
 # Inspect
-head(acs5_2023_firstvars_for_tx_schooldistricts)
+head(acs1_2023_firstvars_for_tx_schooldistricts)
 
 ```
 
